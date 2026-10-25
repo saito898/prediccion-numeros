@@ -5,12 +5,8 @@ import tensorflow as tf
 from tensorflow import keras
 from PIL import Image
 from streamlit_drawable_canvas import st_canvas
-import os
 import pandas as pd
-
-# --------------------------------------------------
-# CONFIGURACIÓN
-# --------------------------------------------------
+import os
 
 st.set_page_config(
     page_title="La Escuela de los Números",
@@ -18,328 +14,378 @@ st.set_page_config(
     layout="wide"
 )
 
-# --------------------------------------------------
-# ESTÉTICA: AULA ESCOLAR
-# --------------------------------------------------
+# =========================================================
+# ESTILO VISUAL: AULA ESCOLAR
+# =========================================================
 
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
-/* Fondo de aula */
+:root {
+    --wall: #f3ead8;
+    --paper: #fffaf0;
+    --wood: #a86636;
+    --wood-dark: #714324;
+    --green: #173e32;
+    --green-light: #285847;
+    --chalk: #f6f1dc;
+    --yellow: #f3ce68;
+    --ink: #263d35;
+}
+
+/* Fondo general */
 .stApp {
-    background-color: #F5F0E5;
-    color: #34443A;
+    background:
+        radial-gradient(ellipse at 50% 0%, #fff9ed 0%, transparent 60%),
+        linear-gradient(180deg, #eee1cb 0%, #f8f1e4 68%, #e3c8a3 100%);
+    color: var(--ink);
+    font-family: 'Nunito', sans-serif;
+}
+
+[data-testid="stHeader"] {
+    background: transparent;
 }
 
 .block-container {
-    max-width: 1250px;
-    padding-top: 2rem;
+    max-width: 1500px;
+    padding-top: 1.2rem;
     padding-bottom: 3rem;
 }
 
-/* Tipografía */
-html, body, [class*="css"] {
-    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+/* Ocultar elementos decorativos predeterminados */
+#MainMenu, footer {
+    visibility: hidden;
 }
 
-h1, h2, h3 {
-    color: #294638 !important;
-}
-
-p, label, .stMarkdown {
-    color: #48584C;
-}
-
-/* Encabezado */
-.school-header {
-    background: #FFFDF7;
-    border: 2px solid #D9CEB8;
-    border-bottom: 7px solid #B68B58;
-    border-radius: 15px;
-    padding: 1.7rem 2rem;
+/* Encabezado como una gran pizarra */
+.classroom-board {
+    position: relative;
+    background:
+        radial-gradient(ellipse at 20% 30%, rgba(255,255,255,.035), transparent 45%),
+        repeating-linear-gradient(3deg, transparent 0px, rgba(255,255,255,.018) 2px, transparent 5px),
+        #173c30;
+    border: 12px solid #9b6035;
+    border-radius: 8px;
+    box-shadow:
+        inset 0 0 0 3px #c68d55,
+        inset 0 0 35px rgba(0,0,0,.25),
+        0 8px 0 #714324,
+        0 13px 22px rgba(70,43,21,.25);
+    padding: 24px 20px 26px;
+    margin-bottom: 28px;
     text-align: center;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 5px 0 rgba(115, 91, 57, 0.06);
+    color: #fff9e8;
 }
 
-.school-icon {
-    font-size: 2.7rem;
-    margin-bottom: 0.3rem;
+.classroom-board:after {
+    content: "✦  ✎  ✦";
+    position: absolute;
+    right: 22px;
+    bottom: 8px;
+    color: #e8d38b;
+    font-size: 17px;
+    letter-spacing: 8px;
 }
 
-.school-title {
-    font-size: 2.4rem;
-    font-weight: 800;
-    color: #294638;
-    letter-spacing: -1px;
+.board-eyebrow {
+    font-family: 'Nunito', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-size: 11px;
+    font-weight: 900;
+    color: #e8cd76;
+    margin-bottom: 5px;
+}
+
+.board-title {
+    font-family: 'Patrick Hand', cursive;
+    font-size: clamp(36px, 5vw, 62px);
+    line-height: 1.05;
+    color: #fff9e8;
+    text-shadow: 1px 2px 0 rgba(0,0,0,.25);
     margin: 0;
 }
 
-.school-subtitle {
-    font-size: 1rem;
-    color: #7B806C;
-    margin-top: 0.6rem;
+.board-subtitle {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 23px;
+    color: #dce8d9;
+    margin-top: 8px;
 }
 
-.school-label {
-    display: inline-block;
-    margin-top: 1rem;
-    background: #E7EEDB;
-    color: #436246;
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
+.board-chalk-line {
+    width: 120px;
+    height: 3px;
+    margin: 14px auto 0;
+    background: #e8cd76;
+    border-radius: 3px;
 }
 
-/* Títulos de las secciones */
-.section-title {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: #294638;
-    margin-bottom: 0.3rem;
+/* Pequeños letreros */
+.section-sign {
+    background: #fff9ed;
+    border: 2px solid #d9c4a4;
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 0 rgba(113,67,36,.12);
+    margin: 4px 0 15px;
+    color: #29483b;
+    font-weight: 900;
+    font-size: 19px;
 }
 
-.section-caption {
-    color: #7B806C;
-    font-size: 0.94rem;
-    margin-bottom: 1rem;
-}
-
-/* Tarjetas */
-[data-testid="stVerticalBlockBorderWrapper"] {
-    background: #FFFDF7;
-    border: 1px solid #DED4C1;
-    border-radius: 15px;
-}
-
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background: #E8E0CE;
-    border-right: 2px solid #D2C4AB;
-}
-
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: #294638 !important;
-}
-
-/* Tablero de tiza: marco exterior */
-.chalkboard-frame {
-    background: #A8794B;
-    padding: 12px;
-    border: 3px solid #825A36;
-    border-radius: 9px;
-    box-shadow:
-        0 7px 0 #D7C3A2,
-        0 10px 18px rgba(74, 55, 34, 0.13);
-    margin-bottom: 1.3rem;
-}
-
-.chalkboard-label {
-    color: #FFF8DF;
-    font-size: 0.78rem;
+.section-sign small {
+    display: block;
+    color: #8b735a;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    margin-top: 3px;
+}
+
+/* Pizarra de instrucciones */
+.side-blackboard {
+    background:
+        repeating-linear-gradient(0deg, transparent 0px, rgba(255,255,255,.015) 2px, transparent 4px),
+        #193f33;
+    color: #fff9e8;
+    border: 7px solid #a66c3f;
+    border-radius: 5px;
+    padding: 20px 17px;
+    box-shadow: inset 0 0 0 2px #c48a53, 0 6px 10px rgba(66,40,20,.13);
+    margin-bottom: 17px;
+}
+
+.side-blackboard h3 {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 25px;
+    color: #f2d577;
+    margin: 0 0 14px;
+}
+
+.side-blackboard p {
+    color: #f7f1df;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.side-blackboard hr {
+    border: 0;
+    border-top: 1px dashed #8ca79a;
+    margin: 15px 0;
+}
+
+/* Tarjetas de papel */
+.paper-card {
+    background: rgba(255,250,240,.96);
+    border: 1px solid #e2d0b4;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 5px 0 rgba(116,76,39,.10), 0 10px 24px rgba(87,57,28,.08);
+    margin-bottom: 17px;
+}
+
+.paper-heading {
+    font-size: 19px;
+    font-weight: 900;
+    color: #29483b;
+    margin-bottom: 5px;
+}
+
+.paper-caption {
+    font-size: 12px;
+    color: #8c7a64;
+    margin-bottom: 13px;
+}
+
+/* Área central del tablero */
+.drawing-frame {
+    background: linear-gradient(135deg, #c48a53, #86502c 40%, #c48a53 70%, #754323);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow:
+        inset 0 0 0 2px #e0b47d,
+        0 6px 0 #714324,
+        0 10px 18px rgba(65,39,18,.18);
+    margin-bottom: 17px;
+}
+
+.drawing-label {
+    font-family: 'Patrick Hand', cursive;
+    color: #f7f0df;
+    background: #173c30;
     text-align: center;
-    padding: 5px 0 10px 0;
-}
-
-/* Canvas */
-[data-testid="stCanvas"] {
-    border: 2px solid #D4C29F;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-/* Filetes y separadores */
-hr {
-    border: none;
-    border-top: 2px dashed #D7CBB5;
-    margin: 1.6rem 0;
+    padding: 7px;
+    font-size: 17px;
+    border-radius: 3px 3px 0 0;
 }
 
 /* Botones */
 .stButton > button {
-    border-radius: 9px;
-    min-height: 45px;
-    font-weight: 750;
-    border: 1px solid #A5B89B;
-    background: #E7EEDB;
-    color: #35533D;
-    transition: all 0.2s ease;
+    border-radius: 10px;
+    min-height: 46px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    border: 2px solid #d7c2a2;
+    background: #fff9ed;
+    color: #29483b;
+    transition: all .18s ease;
+    box-shadow: 0 3px 0 rgba(113,67,36,.13);
 }
 
 .stButton > button:hover {
-    background: #D6E4C8;
-    border-color: #668663;
-    color: #294638;
-    transform: translateY(-1px);
+    border-color: #a66c3f;
+    color: #173e32;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(113,67,36,.15);
 }
 
-/* Botón principal */
 .stButton > button[kind="primary"] {
-    background: #3E684C;
-    color: #FFFFFF;
-    border: 1px solid #31543C;
+    background: #245b48;
+    color: #fff9ed;
+    border-color: #194333;
 }
 
 .stButton > button[kind="primary"]:hover {
-    background: #31543C;
-    color: #FFFFFF;
+    background: #34765d;
+    color: white;
 }
 
 /* Métricas */
 [data-testid="stMetric"] {
-    background: #FFFDF7;
-    border: 1px solid #DED4C1;
-    border-top: 4px solid #7B9B6A;
+    background: #fffaf0;
+    border: 1px solid #e2d0b4;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 13px;
+    box-shadow: 0 3px 0 rgba(113,67,36,.08);
 }
 
 [data-testid="stMetricLabel"] {
-    color: #77816E !important;
+    color: #78654f;
+    font-weight: 800;
 }
 
 [data-testid="stMetricValue"] {
-    color: #294638 !important;
+    color: #245b48;
+    font-weight: 900;
 }
 
-/* Imágenes de procesamiento */
-[data-testid="stImage"] img {
+/* Mensajes */
+.stAlert {
     border-radius: 10px;
-    border: 2px solid #DED4C1;
 }
 
-/* Expanders */
+/* Gráficas y expanders */
 [data-testid="stExpander"] {
-    background: #FFFDF7;
-    border: 1px solid #DED4C1;
+    background: #fffaf0;
+    border: 1px solid #e2d0b4;
     border-radius: 10px;
 }
 
-/* Alertas */
-[data-testid="stAlert"] {
-    border-radius: 10px;
+[data-testid="stImage"] img {
+    border-radius: 8px;
 }
 
-/* Gráfico */
-[data-testid="stVegaLiteChart"] {
-    background: #FFFDF7;
-    border: 1px solid #DED4C1;
-    border-radius: 12px;
-    padding: 0.5rem;
+/* Separadores */
+hr {
+    border-color: #ddc8a7;
 }
 
-/* Pie de página */
-.school-footer {
-    margin-top: 3rem;
+/* Pie decorativo */
+.classroom-footer {
     text-align: center;
-    color: #8A8978;
-    font-size: 0.83rem;
-    padding: 1.2rem;
-    border-top: 2px dashed #D7CBB5;
+    font-family: 'Patrick Hand', cursive;
+    color: #75543a;
+    font-size: 19px;
+    margin-top: 22px;
+    padding: 14px;
+    border-top: 2px dashed #c4a57d;
 }
 
-.school-footer strong {
-    color: #436246;
-}
-
-/* Pantallas pequeñas */
-@media (max-width: 700px) {
-    .school-title {
-        font-size: 1.8rem;
+@media (max-width: 800px) {
+    .classroom-board {
+        border-width: 7px;
+        padding: 20px 10px;
     }
 
-    .school-header {
-        padding: 1.3rem 1rem;
+    .board-subtitle {
+        font-size: 18px;
     }
 
-    .block-container {
-        padding-left: 1rem;
-        padding-right: 1rem;
+    .side-blackboard {
+        padding: 15px;
     }
 }
-
 </style>
 """, unsafe_allow_html=True)
 
 
-# --------------------------------------------------
-# ENCABEZADO ESCOLAR
-# --------------------------------------------------
+# =========================================================
+# ENCABEZADO PRINCIPAL
+# =========================================================
 
 st.markdown("""
-<div class="school-header">
-    <div class="school-icon">📚 ✏️ 🧮</div>
-    <div class="school-title">La Escuela de los Números</div>
-    <div class="school-subtitle">
-        ¡Escribe un número en el tablero y descubre qué aprendió nuestra IA!
+<div class="classroom-board">
+    <div class="board-eyebrow">Aula de inteligencia artificial · Matemáticas</div>
+    <h1 class="board-title">La Escuela de los Números</h1>
+    <div class="board-subtitle">
+        ¡Escribe con tiza y descubre qué número reconoce nuestra inteligencia artificial!
     </div>
-    <div class="school-label">AULA DIGITAL · MATEMÁTICAS</div>
+    <div class="board-chalk-line"></div>
 </div>
 """, unsafe_allow_html=True)
 
 
-# --------------------------------------------------
-# INFORMACIÓN TÉCNICA EN LA BARRA LATERAL
-# --------------------------------------------------
+# =========================================================
+# INFORMACIÓN DEL MODELO
+# =========================================================
 
 with st.sidebar:
-    st.markdown("## 🏫 Aula de tecnología")
-    st.markdown("---")
+    st.markdown("""
+    <div class="side-blackboard">
+        <h3>📚 Rincón del conocimiento</h3>
+        <p>Bienvenido al aula. Aquí aprenderemos cómo una inteligencia artificial reconoce los números escritos a mano.</p>
+        <hr>
+        <h3>🧑‍🏫 ¿Cómo participar?</h3>
+        <p><b>1.</b> Dibuja un número del 0 al 9 en el tablero.</p>
+        <p><b>2.</b> Pulsa el botón de predecir.</p>
+        <p><b>3.</b> Observa qué número reconoce la IA.</p>
+        <p><b>4.</b> Revisa su nivel de confianza y las otras posibilidades.</p>
+        <hr>
+        <p style="text-align:center;font-family:'Patrick Hand',cursive;font-size:20px;color:#f2d577;">
+            ¡Cada trazo es una oportunidad para aprender!
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("### 📖 Información del modelo")
+    st.markdown("### 🔬 Ficha técnica del modelo")
     st.write(f"**TensorFlow:** `{tf.__version__}`")
     st.write(f"**Keras:** `{keras.__version__}`")
-
-    st.markdown("---")
-    st.markdown("### 📝 ¿Cómo jugar?")
-    st.markdown("""
-    1. Toma la tiza virtual.
-    2. Dibuja un número del **0 al 9**.
-    3. Pulsa **Predecir**.
-    4. Descubre qué número reconoce la inteligencia artificial.
-    5. ¡Borra el tablero y prueba otro!
-    """)
-
-    st.markdown("---")
-    st.caption("Laboratorio de aprendizaje automático · MNIST")
+    st.caption("Modelo de clasificación entrenado con el conjunto de datos MNIST.")
 
 
-# --------------------------------------------------
-# CARGAR MODELO
-# --------------------------------------------------
+# =========================================================
+# CARGA DEL MODELO
+# =========================================================
 
 @st.cache_resource
 def load_mnist_model():
-    """Carga el modelo MNIST desde archivo .keras"""
-
     model_files = ["mnist_model.keras", "mnist_model.h5"]
 
     for model_path in model_files:
         if os.path.exists(model_path):
             try:
-                st.info(f"📂 Intentando cargar: {model_path}")
                 model = keras.models.load_model(model_path)
-                st.success(
-                    f"✅ Modelo cargado exitosamente desde: `{model_path}`"
-                )
                 return model
-
             except Exception as e:
-                st.error(f"❌ Error al cargar {model_path}: {str(e)}")
-                continue
+                st.error(f"Error al cargar {model_path}: {str(e)}")
 
-    st.error("❌ No se encontró ningún modelo")
+    st.error("No se encontró ningún modelo compatible.")
     st.info("""
-    **Instrucciones:**
+    **Para solucionarlo:**
     1. Entrena el modelo en Google Colab.
     2. Descarga `mnist_model.keras`.
-    3. Súbelo a la raíz de tu repositorio.
+    3. Sube el archivo a la raíz de tu repositorio.
     4. Reinicia la aplicación.
     """)
     st.stop()
@@ -348,27 +394,30 @@ def load_mnist_model():
 model = load_mnist_model()
 
 
-# --------------------------------------------------
-# TABLERO Y CONTROLES
-# --------------------------------------------------
+# =========================================================
+# DISTRIBUCIÓN DEL AULA
+# =========================================================
 
-st.markdown("""
-<div class="section-title">✏️ ¡Tu turno de escribir!</div>
-<div class="section-caption">
-    Dibuja un solo dígito del 0 al 9, como si estuvieras escribiendo en clase.
-</div>
-""", unsafe_allow_html=True)
+col_dibujo, col_resultados = st.columns([1.12, 0.88], gap="large")
 
-col1, col2 = st.columns([1.7, 1], gap="large")
 
-with col1:
+# =========================================================
+# ZONA DE DIBUJO
+# =========================================================
+
+with col_dibujo:
     st.markdown("""
-    <div class="chalkboard-frame">
-        <div class="chalkboard-label">
-            ✦ TABLERO DE TIZA · ESCRIBE AQUÍ ✦
-        </div>
+    <div class="section-sign">
+        ✏️ El tablero del estudiante
+        <small>Escribe un solo número, del 0 al 9</small>
     </div>
     """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="drawing-label">✦ Pizarra de tiza ✦</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="drawing-frame">', unsafe_allow_html=True)
 
     canvas_result = st_canvas(
         fill_color="rgba(0, 0, 0, 0)",
@@ -381,183 +430,205 @@ with col1:
         key="canvas",
     )
 
-    st.caption("🖍️ Usa el ratón o el dedo para escribir tu número.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-with col2:
-    st.markdown("""
-    <div class="section-title">🎒 Tu escritorio</div>
-    <div class="section-caption">
-        Cuando termines de escribir, pídele al modelo que adivine.
-    </div>
-    """, unsafe_allow_html=True)
+    st.caption("🖍️ Usa el ratón o el dedo para escribir en la pizarra.")
 
-    st.markdown("#### 🔎 ¿Qué número escribiste?")
+    btn_predecir, btn_limpiar = st.columns(2)
 
-    predict_btn = st.button(
-        "🔍 Predecir número",
-        type="primary",
-        use_container_width=True
-    )
+    with btn_predecir:
+        predict_btn = st.button(
+            "🔎 Predecir número",
+            type="primary",
+            use_container_width=True
+        )
 
-    clear_btn = st.button(
-        "🧽 Borrar tablero",
-        use_container_width=True
-    )
+    with btn_limpiar:
+        clear_btn = st.button(
+            "🧽 Borrar pizarra",
+            use_container_width=True
+        )
 
     if clear_btn:
         st.rerun()
 
-    st.markdown("---")
-
-    st.markdown("#### 💡 Consejo de la profe")
-    st.info(
-        "Escribe el número grande, centrado y con un trazo claro. "
-        "¡Así será más fácil reconocerlo!"
-    )
-
     st.markdown("""
-    <div style="
-        background:#F2E6C9;
-        border-left:5px solid #C79A55;
-        padding:14px;
-        border-radius:8px;
-        color:#675333;
-        font-size:0.9rem;
-    ">
-        <strong>⭐ Reto del día</strong><br>
-        ¿Cuántos números diferentes puedes escribir correctamente?
+    <div class="paper-card">
+        <div class="paper-heading">💡 Consejo del profesor</div>
+        <div class="paper-caption">
+            Escribe el número grande, centrado y con un trazo claro.
+            La IA puede confundirse si los números se parecen entre sí.
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
 
-# --------------------------------------------------
+# =========================================================
+# ZONA DE RESULTADOS
+# =========================================================
+
+with col_resultados:
+    st.markdown("""
+    <div class="section-sign">
+        🧑‍🏫 Evaluación del profesor
+        <small>Resultados del reconocimiento automático</small>
+    </div>
+    """, unsafe_allow_html=True)
+
+    result_placeholder = st.empty()
+
+    with result_placeholder.container():
+        st.markdown("""
+        <div class="paper-card" style="text-align:center;padding:35px 18px;">
+            <div style="font-size:48px;">📋</div>
+            <div class="paper-heading">Tu evaluación aparecerá aquí</div>
+            <div class="paper-caption">
+                Dibuja un número en el tablero y pulsa
+                <b>Predecir número</b> para comenzar.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+# =========================================================
 # PREDICCIÓN
-# --------------------------------------------------
+# =========================================================
 
 if predict_btn:
-    if canvas_result.image_data is not None:
+    if canvas_result.image_data is None:
+        st.warning("Primero dibuja un número en el tablero.")
+    else:
+        # Convertir el dibujo a escala de grises y separar la tiza
+        # blanca del fondo verde para mantener el formato de MNIST.
+        rgba = canvas_result.image_data.astype("uint8")
+        rgb = rgba[:, :, :3]
 
-        if np.max(canvas_result.image_data) == 0:
-            st.warning("⚠️ ¡El tablero está vacío! Dibuja un número primero.")
+        # El trazo blanco destaca por su luminosidad.
+        gray = np.array(
+            Image.fromarray(rgb).convert("L")
+        )
 
+        # MNIST espera fondo negro y trazo blanco.
+        # El umbral elimina el color de la pizarra y conserva la tiza.
+        drawing_mask = gray > 145
+
+        if not np.any(drawing_mask):
+            st.warning("¡La pizarra está vacía! Dibuja un número antes de predecir.")
         else:
-            with st.spinner("🧠 La inteligencia artificial está pensando..."):
+            with st.spinner("🔔 El profesor está revisando tu respuesta..."):
+                processed = np.zeros_like(gray, dtype=np.uint8)
+                processed[drawing_mask] = 255
 
-                # Procesar imagen
-                image = Image.fromarray(
-                    canvas_result.image_data.astype("uint8")
-                ).convert("L")
-
+                image = Image.fromarray(processed)
                 image_resized = image.resize(
                     (28, 28),
                     Image.Resampling.LANCZOS
                 )
 
-                img_array = np.array(image_resized) / 255.0
+                img_array = np.array(image_resized).astype("float32") / 255.0
                 img_array = img_array.reshape(1, 28, 28, 1)
 
-                # Predicción
                 prediction = model.predict(img_array, verbose=0)
-                digit = np.argmax(prediction)
-                confidence = np.max(prediction) * 100
+                digit = int(np.argmax(prediction))
+                confidence = float(np.max(prediction) * 100)
+                alternative = int(np.argsort(prediction[0])[-2])
 
-            # ------------------------------------------
-            # RESULTADO PRINCIPAL
-            # ------------------------------------------
+            with col_resultados:
+                st.markdown(f"""
+                <div class="paper-card" style="text-align:center;border-top:5px solid #3d8064;">
+                    <div style="font-size:13px;color:#8b735a;font-weight:900;text-transform:uppercase;letter-spacing:2px;">
+                        Resultado de la evaluación
+                    </div>
+                    <div style="font-size:65px;line-height:1.2;font-weight:900;color:#245b48;">
+                        {digit}
+                    </div>
+                    <div style="font-size:16px;color:#3d8064;font-weight:900;">
+                        ¡La IA cree que escribiste un {digit}!
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
-            st.markdown("<hr>", unsafe_allow_html=True)
+                col_m1, col_m2, col_m3 = st.columns(3)
 
-            st.markdown("""
-            <div class="section-title">🏆 ¡Tenemos una respuesta!</div>
-            <div class="section-caption">
-                La profesora virtual ha revisado tu escritura.
-            </div>
-            """, unsafe_allow_html=True)
+                with col_m1:
+                    st.metric("🎯 Predicción", digit)
 
-            st.success(f"## 🎯 ¡El dígito detectado es: {digit}!")
+                with col_m2:
+                    st.metric("📈 Confianza", f"{confidence:.1f}%")
 
-            col_m1, col_m2, col_m3 = st.columns(3)
+                with col_m3:
+                    st.metric("📝 Alternativa", alternative)
 
-            with col_m1:
-                st.metric("📘 Predicción", digit)
+                st.markdown("""
+                <div class="paper-card">
+                    <div class="paper-heading">🖼️ Cuaderno de procesamiento</div>
+                    <div class="paper-caption">
+                        Así se ve tu escritura antes y después de convertirse en una imagen de 28 × 28 píxeles.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
-            with col_m2:
-                st.metric("🎯 Confianza", f"{confidence:.1f}%")
+                col_img1, col_img2 = st.columns(2)
 
-            with col_m3:
-                alternative = np.argsort(prediction[0])[-2]
-                st.metric("🔢 Segunda opción", alternative)
-
-            # ------------------------------------------
-            # PROCESAMIENTO DE IMAGEN
-            # ------------------------------------------
-
-            st.markdown("<hr>", unsafe_allow_html=True)
-
-            st.markdown("""
-            <div class="section-title">🔬 Así ve la IA tu número</div>
-            <div class="section-caption">
-                La imagen original se transforma en una cuadrícula de 28 × 28 píxeles.
-            </div>
-            """, unsafe_allow_html=True)
-
-            col_img1, col_img2 = st.columns(2)
-
-            with col_img1:
-                st.markdown("#### ✏️ Tu dibujo original")
-                st.image(
-                    canvas_result.image_data,
-                    width=250
-                )
-
-            with col_img2:
-                st.markdown("#### 🧩 Imagen procesada")
-                st.image(
-                    image_resized,
-                    width=250
-                )
-
-            # ------------------------------------------
-            # PROBABILIDADES
-            # ------------------------------------------
-
-            st.markdown("<hr>", unsafe_allow_html=True)
-
-            st.markdown("""
-            <div class="section-title">📊 Las respuestas posibles</div>
-            <div class="section-caption">
-                Observa qué probabilidad le asigna el modelo a cada dígito.
-            </div>
-            """, unsafe_allow_html=True)
-
-            prob_df = pd.DataFrame({
-                "Dígito": [str(i) for i in range(10)],
-                "Probabilidad (%)": prediction[0] * 100
-            })
-
-            st.bar_chart(prob_df.set_index("Dígito"))
-
-            with st.expander("🔍 Ver las calificaciones de todos los números"):
-                for i, prob in enumerate(prediction[0]):
-                    emoji = "🏆" if i == digit else "✏️"
-                    st.write(
-                        f"{emoji} **Dígito {i}:** {prob * 100:.2f}%"
+                with col_img1:
+                    st.markdown("**Tu dibujo**")
+                    st.image(
+                        rgba,
+                        caption="Pizarra original",
+                        use_container_width=True
                     )
 
-    else:
-        st.warning("⚠️ ¡Dibuja un número en el tablero antes de predecir!")
+                with col_img2:
+                    st.markdown("**Imagen para la IA**")
+                    st.image(
+                        image_resized,
+                        caption="28 × 28 píxeles",
+                        use_container_width=True
+                    )
+
+                st.markdown("""
+                <div class="paper-card">
+                    <div class="paper-heading">📊 Calificaciones por número</div>
+                    <div class="paper-caption">
+                        La altura de cada barra indica la probabilidad que asigna el modelo a cada dígito.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                prob_df = pd.DataFrame({
+                    "Dígito": [str(i) for i in range(10)],
+                    "Probabilidad (%)": prediction[0] * 100
+                })
+
+                st.bar_chart(
+                    prob_df.set_index("Dígito"),
+                    use_container_width=True
+                )
+
+                with st.expander("📖 Ver el informe completo del profesor"):
+                    for i, prob in enumerate(prediction[0]):
+                        if i == digit:
+                            st.write(f"🏆 **Dígito {i}: {prob * 100:.2f}%** — Predicción principal")
+                        else:
+                            st.write(f"✏️ Dígito {i}: {prob * 100:.2f}%")
+
+                if confidence >= 90:
+                    st.success("¡Excelente! La IA reconoce el número con mucha confianza.")
+                elif confidence >= 65:
+                    st.info("La IA tiene una buena idea, pero algunos números podrían parecerse.")
+                else:
+                    st.warning("La IA no está muy segura. Prueba a escribir el número más claramente.")
 
 
-# --------------------------------------------------
-# PIE DE PÁGINA
-# --------------------------------------------------
+# =========================================================
+# PIE DEL AULA
+# =========================================================
 
 st.markdown("""
-<div class="school-footer">
-    <strong>🏫 La Escuela de los Números</strong><br>
-    Aprender, experimentar y descubrir con inteligencia artificial.<br>
-    <span style="font-size:0.75rem;">
-        Powered by TensorFlow · Keras · MNIST
-    </span>
+<div class="classroom-footer">
+    ✦ Aprender es descubrir algo nuevo cada día ✦
+    <div style="font-family:'Nunito',sans-serif;font-size:11px;margin-top:5px;">
+        Laboratorio escolar de inteligencia artificial · Modelo MNIST
+    </div>
 </div>
 """, unsafe_allow_html=True)
