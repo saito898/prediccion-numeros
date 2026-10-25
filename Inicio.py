@@ -575,7 +575,7 @@ if predict_btn:
                     st.image(
                         rgba,
                         caption="Pizarra original",
-                        use_container_width=True
+                        width = 200
                     )
 
                 with col_img2:
@@ -583,7 +583,7 @@ if predict_btn:
                     st.image(
                         image_resized,
                         caption="28 × 28 píxeles",
-                        use_container_width=True
+                        width = 200
                     )
 
                 st.markdown("""
